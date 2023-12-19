@@ -1,12 +1,12 @@
 var express = require("express");
 var app = express();
-// const cors = require('cors');
-// const corsOptions = {
-//     origin: 'http://localhost:3000',
-//     credentials: true,            //access-control-allow-credentials:true
-//     optionSuccessStatus: 200
-// }
-// app.use(cors(corsOptions));
+const cors = require('cors');
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    credentials: true,            //access-control-allow-credentials:true
+    optionSuccessStatus: 200
+}
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -20,7 +20,7 @@ app.use(function (req, res, next) {
     );
     next();
 });
-var port = process.env.PORT||2410;
+const port = 2410;
 app.listen(port, () => console.log(`Node App listening on port ${port}!`));
 
 let fs = require("fs");
@@ -78,7 +78,7 @@ app.get("/products/:id", function (req, res) {
         else {
             let data = JSON.parse(content);
             let { products } = data;
-            let product=products.find(ele=>ele.productId===id);
+            let product = products.find(ele => ele.productId === id);
             res.send(product);
         }
     })
@@ -104,7 +104,7 @@ app.post("/products", function (req, res) {
 app.put("/products/:id", function (req, res) {
     let body = req.body;
     let id = (+req.params.id);
-    console.log(body,id);
+    console.log(body, id);
     fs.readFile(fname, "utf8", function (err, content) {
         if (err) res.status(404).send(err);
         else {
@@ -124,36 +124,10 @@ app.put("/products/:id", function (req, res) {
     })
 })
 
-app.get("/purchases", function (req, res) {
-    let { shop, products, sortBy } = req.query;
-    let arr=products?products.split(","):[];
-    fs.readFile(fname, "utf8", function (err, content) {
-        if (err) res.status(404).send(err);
-        else {
-            let data = JSON.parse(content);
-            let { purchases } = data;
-            console.log(products,arr);
-            let newarr = shop ? purchases.filter(ele => ele.shopId === (+shop)) : purchases;
-            newarr = products ? newarr.filter(ele => arr.find(pid=>+pid===ele.productid)) : newarr;
-            
-            if (sortBy) {
-                if (sortBy === 'QtyAsc')
-                    newarr.sort((ele1, ele2) => ele1.quantity - ele2.quantity);
-                if (sortBy === 'QtyDesc')
-                    newarr.sort((ele1, ele2) => -1 * (ele1.quantity - ele2.quantity));
-                if (sortBy === 'ValueDesc')
-                    newarr.sort((ele1, ele2) => -1 * (ele1.quantity * ele1.price - ele2.quantity * ele2.price));
-                if (sortBy === 'ValueAsc')
-                    newarr.sort((ele1, ele2) => ele1.quantity * ele1.price - ele2.quantity * ele2.price);
-            }
-            res.send(newarr);
-        }
-    })
-})
 
 app.get("/purchases/shops/:id", function (req, res) {
     let id = (+req.params.id);
-    let sortBy=req.query.sortBy;
+    let sortBy = req.query.sortBy;
     fs.readFile(fname, "utf8", function (err, content) {
         if (err) res.status(404).send(err);
         else {
@@ -173,7 +147,7 @@ app.get("/purchases/shops/:id", function (req, res) {
             res.send(newarr);
         }
     })
-})
+});
 app.get("/purchases/products/:id", function (req, res) {
     let id = (+req.params.id);
     fs.readFile(fname, "utf8", function (err, content) {
@@ -185,7 +159,39 @@ app.get("/purchases/products/:id", function (req, res) {
             res.send(newarr);
         }
     })
-})
+});
+
+app.get("/purchases", function (req, res) {
+    let { shop, product, sortBy } = req.query;
+    console.log(shop, product);
+    let arr = product ? product.split(",") : [];
+    console.log(shop, arr);
+    fs.readFile(fname, "utf8", function (err, content) {
+        if (err) res.status(404).send(err);
+        else {
+            let data = JSON.parse(content);
+            let { purchases } = data;
+            let newarr = shop ? purchases.filter(ele => (+shop[2])=== ele.shopId) : purchases;
+         
+            let newarr2=product?newarr.filter(p1=>arr.find(p=>(+p[2])===p1.productid)):newarr;
+            console.log(newarr2);
+            if (sortBy) {
+                if (sortBy === 'QtyAsc')
+                    newarr2.sort((ele1, ele2) => ele1.quantity - ele2.quantity);
+                if (sortBy === 'QtyDesc')
+                    newarr2.sort((ele1, ele2) => -1 * (ele1.quantity - ele2.quantity));
+                if (sortBy === 'ValueDesc')
+                    newarr2.sort((ele1, ele2) => -1 * (ele1.quantity * ele1.price - ele2.quantity * ele2.price));
+                if (sortBy === 'ValueAsc')
+                    newarr2.sort((ele1, ele2) => ele1.quantity * ele1.price - ele2.quantity * ele2.price);
+            }
+            console.log(newarr2)
+            res.send(newarr2);
+        }
+    })
+});
+
+
 app.post("/purchases", function (req, res) {
     let body = req.body;
     fs.readFile(fname, "utf8", function (err, content) {
@@ -219,7 +225,7 @@ app.get("/totalPurchase/shop/:shopId", function (req, res) {
                     pur.quantity = pur.quantity + curr.quantity;
                 }
                 else {
-                    acc.push({ shopId:curr.shopId,productid: curr.productid, quantity: curr.quantity,price:curr.price });
+                    acc.push({ shopId: curr.shopId, productid: curr.productid, quantity: curr.quantity, price: curr.price });
                 }
                 return acc;
             }, []);
@@ -244,7 +250,7 @@ app.get("/totalPurchase/product/:prodId2", function (req, res) {
                     pur.quantity = pur.quantity + curr.quantity;
                 }
                 else {
-                    acc.push({ shopId:curr.shopId,productid: curr.productid, quantity: curr.quantity,price:curr.price});
+                    acc.push({ shopId: curr.shopId, productid: curr.productid, quantity: curr.quantity, price: curr.price });
                 }
                 return acc;
             }, []);
@@ -259,7 +265,7 @@ app.get("/data", function (req, res) {
         if (err) res.status(404).send(err);
         else {
             let data = JSON.parse(content);
-            
+
             res.send(data);
         }
     })
